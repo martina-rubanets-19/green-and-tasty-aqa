@@ -31,6 +31,11 @@ test.describe('Admin sign in', () => {
 
     await adminLoginPage.logoutButton.click();
 
+    // Logout is asynchronous: the site calls the API, removes the session cookie and only then
+    // redirects to the front page. Wait for that, otherwise /admin still sees the old session.
+    await expect(page).toHaveURL(/\/$/);
+    await expect.poll(async () => (await page.context().cookies()).some((c) => c.name === 'token')).toBe(false);
+
     await page.goto('/admin');
     // The session is gone: the admin area asks for credentials again.
     await adminLoginPage.expectLoginFormShown();
