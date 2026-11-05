@@ -1,0 +1,18 @@
+{
+  "name": "green-and-tasty-aqa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IT Marathon AQA homework #8 — Direction 2, Level 1 (end-to-end, Playwright + Page Object Model) on a public booking site",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --grep @ui",
+    "test:api": "playwright test --grep @api",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:level1": "playwright test --grep @level1",
+    "report": "playwright show-report reports/html"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1",
+    "@types/node": "22.10.2"
+  }
+}

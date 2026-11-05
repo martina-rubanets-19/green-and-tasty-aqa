@@ -1,0 +1,92 @@
+name: E2E tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: 'Run only tests with this tag (e.g. @smoke, @api, @ui, @level1). Empty = all.'
+        required: false
+        default: ''
+  schedule:
+    - cron: '17 3 * * *' # nightly
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      UI_URL: ${{ vars.UI_URL || 'https://automationintesting.online' }}
+      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        id: tests
+        # A failing test must not stop the pipeline: the report is still published.
+        continue-on-error: true
+        run: |
+          if [ -n "${{ github.event.inputs.grep }}" ]; then
+            npx playwright test --grep "${{ github.event.inputs.grep }}"
+          else
+            npx playwright test
+          fi
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: reports/html
+          retention-days: 14
+
+      - name: Upload traces, screenshots and videos of failed tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-test-artifacts
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Publish test summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        continue-on-error: true
+        with:
+          name: Playwright results
+          path: reports/junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Result
+        if: always()
+        run: |
+          echo "Tests outcome: ${{ steps.tests.outcome }}"
+          echo "### E2E tests: ${{ steps.tests.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the **playwright-html-report** artifact and open index.html for details." >> "$GITHUB_STEP_SUMMARY"
