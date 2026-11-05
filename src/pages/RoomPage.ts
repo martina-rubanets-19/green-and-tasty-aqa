@@ -24,7 +24,7 @@ export class RoomPage {
    */
   async expectRoomShown(roomType: string): Promise<void> {
     const current = this.page.getByRole('navigation', { name: 'breadcrumb' }).locator('[aria-current="page"]');
-    await expect(current).toHaveText(new RegExp(`^\\s*${escapeRegExp(roomType)} Room\\s*$`), { timeout: 45_000 });
+    await expect(current).toHaveText(new RegExp(`^\\s*${escapeRegExp(roomType)} Room\\s*$`), { timeout: 20_000 });
     await expect(this.title).toContainText(roomType);
     await expect(this.descriptionHeading).toBeVisible();
     await expect(this.featuresHeading).toBeVisible();

@@ -13,6 +13,19 @@ import { isoDateFromToday, ukDate } from '../../src/data/factories';
 
 const TAGS = ['@level1', '@ui', '@rooms'];
 
+/**
+ * KNOWN DEFECT (site): /reservation/{id} never finishes loading — the page stays on the
+ * loading spinner and room details are never shown (reproduced manually in a regular browser,
+ * 2026-11-05). The scenarios below describe the correct behaviour and are marked with
+ * test.fail(): while the defect exists they are reported as "expected to fail"; once the site
+ * is fixed they start passing and Playwright flags them, so the marker can be removed.
+ */
+const ROOM_PAGE_DEFECT = 'Room details page never loads (stays on the loading spinner) — site defect';
+const markRoomPageDefect = () => {
+  test.info().annotations.push({ type: 'known-defect', description: ROOM_PAGE_DEFECT });
+  test.fail(true, ROOM_PAGE_DEFECT);
+};
+
 test.describe('Rooms (menu analogue)', () => {
   test('the front page lists rooms, each with a type, a nightly price and a booking link', { tag: [...TAGS, '@smoke'] }, async ({ homePage, api }) => {
     const apiRooms = await api.listRooms();
@@ -38,7 +51,8 @@ test.describe('Rooms (menu analogue)', () => {
     expect(shownTypes).toEqual(apiTypes);
   });
 
-  test('opening a room shows that room’s details', { tag: [...TAGS, '@smoke'] }, async ({ page, homePage, roomPage }) => {
+  test('opening a room shows that room’s details', { tag: [...TAGS, '@smoke', '@known-defect'] }, async ({ page, homePage, roomPage }) => {
+    markRoomPageDefect();
     await homePage.open();
     await homePage.waitForRooms();
     const card = homePage.roomCard(0);
@@ -52,7 +66,8 @@ test.describe('Rooms (menu analogue)', () => {
     await roomPage.expectRoomShown(roomType);
   });
 
-  test('every room on the front page opens its own details page', { tag: TAGS }, async ({ homePage, roomPage }) => {
+  test('every room on the front page opens its own details page', { tag: [...TAGS, '@known-defect'] }, async ({ homePage, roomPage }) => {
+    markRoomPageDefect();
     await homePage.open();
     await homePage.waitForRooms();
     const count = await homePage.roomCount();
