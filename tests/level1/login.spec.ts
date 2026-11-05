@@ -32,8 +32,8 @@ test.describe('Admin sign in', () => {
     await adminLoginPage.logoutButton.click();
 
     await page.goto('/admin');
-    await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
-    await expect(adminLoginPage.logoutButton).toHaveCount(0);
+    // The session is gone: the admin area asks for credentials again.
+    await adminLoginPage.expectLoginFormShown();
   });
 
   const rejected: { title: string; username: () => string; password: () => string }[] = [

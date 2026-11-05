@@ -29,12 +29,25 @@ export class AdminLoginPage {
 
   async expectSignedIn(): Promise<void> {
     await expect(this.page).toHaveURL(/\/admin\/rooms/);
-    await expect(this.logoutButton).toBeVisible();
+    await expect(this.loginButton).toHaveCount(0);
+    await expect(this.error).toHaveCount(0);
   }
 
+  /**
+   * Note: the admin navigation (with its "Logout" button) is rendered on /admin even
+   * before signing in, so "no Logout button" is NOT a valid signal of being signed out.
+   * The reliable signals are: error shown, still on the login form, not on /admin/rooms.
+   */
   async expectRejected(): Promise<void> {
     await expect(this.error).toBeVisible();
+    await expect(this.loginButton).toBeVisible();
+    await expect(this.username).toBeVisible();
     await expect(this.page).not.toHaveURL(/\/admin\/rooms/);
-    await expect(this.logoutButton).toHaveCount(0);
+  }
+
+  async expectLoginFormShown(): Promise<void> {
+    await expect(this.page.getByRole('heading', { name: 'Login' })).toBeVisible();
+    await expect(this.username).toBeVisible();
+    await expect(this.loginButton).toBeVisible();
   }
 }

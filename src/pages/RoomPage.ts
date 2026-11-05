@@ -16,8 +16,16 @@ export class RoomPage {
     await this.page.goto(`/reservation/${roomId}`);
   }
 
+  /**
+   * The page renders only after two client-side requests (room + branding), and the site's
+   * proxy retries slow backends with back-off, so the room details get a longer timeout.
+   * The breadcrumb ("Home / Rooms / <Type> Room") is the anchor: it is a nav landmark with
+   * aria-current, rendered together with the details.
+   */
   async expectRoomShown(roomType: string): Promise<void> {
-    await expect(this.title).toHaveText(new RegExp(`^\\s*${escapeRegExp(roomType)} Room\\s*$`));
+    const current = this.page.getByRole('navigation', { name: 'breadcrumb' }).locator('[aria-current="page"]');
+    await expect(current).toHaveText(new RegExp(`^\\s*${escapeRegExp(roomType)} Room\\s*$`), { timeout: 45_000 });
+    await expect(this.title).toContainText(roomType);
     await expect(this.descriptionHeading).toBeVisible();
     await expect(this.featuresHeading).toBeVisible();
   }
